@@ -1,0 +1,7 @@
+node_modules
+dist
+.vite
+backend/.venv
+.venv
+.env
+backend/.env
