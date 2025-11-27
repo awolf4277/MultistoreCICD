@@ -8,7 +8,7 @@ interface StripeCartItem {
 
 interface CheckoutFormProps {
   cartItems: StripeCartItem[];
-  cartTotal: number; // in dollars
+  cartTotal?: number; // optional for TS, defaults to 0 inside
   onSuccess: () => void;
 }
 
@@ -24,6 +24,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   );
 
   const cartEmpty = cartItems.length === 0;
+  const total = cartTotal ?? 0; // 🔥 default to 0 if not passed
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,12 +34,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       return;
     }
 
-    // 🔥 DEMO MODE: simulate a successful payment, no backend
+    // DEMO MODE: simulate a successful payment, no backend call
     setStatus("loading");
 
     setTimeout(() => {
       setStatus("success");
-      onSuccess(); // this triggers your toast + order modal in App.tsx
+      onSuccess(); // triggers your toast + order modal in App.tsx
     }, 800);
   }
 
@@ -47,7 +48,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       <h2>Checkout</h2>
 
       <p>
-        Order total: <strong>${cartTotal.toFixed(2)}</strong>
+        Order total: <strong>${total.toFixed(2)}</strong>
       </p>
 
       <form onSubmit={handleSubmit} className="checkout-form__form">
@@ -87,5 +88,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
 };
 
 export default CheckoutForm;
+
 
 
