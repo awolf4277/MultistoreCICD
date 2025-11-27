@@ -3,29 +3,24 @@ import React from "react";
 import CheckoutForm from "../components/CheckoutForm";
 
 const CheckoutPage: React.FC = () => {
-  const cartItems = [
-    { id: "prod_4k_gaming_monitor", quantity: 1 },
-    { id: "prod_mechanical_keyboard", quantity: 2 },
-  ];
-
-  const handleSuccess = () => {
-    console.log("Payment success – clear cart and redirect to thank-you page.");
-  };
+  const [submitted, setSubmitted] = React.useState(false);
 
   return (
-    <div className="checkout-page">
-      <div className="checkout-summary">
-        <h2>Order Summary</h2>
-        <ul>
-          <li>4K Gaming Monitor x 1</li>
-          <li>Mechanical Keyboard x 2</li>
-        </ul>
-        <p>Total will be calculated on the backend (Stripe amount: $859.97).</p>
-      </div>
-      <div className="checkout-payment">
-        <CheckoutForm cartItems={cartItems} onSuccess={handleSuccess} />
-      </div>
-    </div>
+    <main className="checkout-page">
+      <h1>Checkout</h1>
+
+      <CheckoutForm
+        cartItems={[]}        // empty demo cart
+        cartTotal={0}         // $0.00 total so TS is happy
+        onSuccess={() => setSubmitted(true)}
+      />
+
+      {submitted && (
+        <p style={{ marginTop: 12, fontSize: 13 }}>
+          Demo checkout complete.
+        </p>
+      )}
+    </main>
   );
 };
 

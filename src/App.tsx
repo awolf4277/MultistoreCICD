@@ -1,7 +1,7 @@
 import React from "react";
 import { products } from "./products";
 import CheckoutForm from "./components/CheckoutForm";
-import { Header } from "./components/Header";
+
 
 interface CartItem {
   id: string;
