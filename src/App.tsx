@@ -1,6 +1,7 @@
 import React from "react";
 import { products } from "./products";
 import CheckoutForm from "./components/CheckoutForm";
+import { Header } from "./components/Header";
 
 interface CartItem {
   id: string;
@@ -21,10 +22,12 @@ const App: React.FC = () => {
   const [store, setStore] = React.useState<StoreMode>("main");
   const [lastOrder, setLastOrder] = React.useState<LastOrder | null>(null);
   const [showOrderModal, setShowOrderModal] = React.useState(false);
-  const [toast, setToast] = React.useState<{ message: string; visible: boolean }>({
-    message: "",
-    visible: false,
-  });
+  const [toast, setToast] = React.useState<{ message: string; visible: boolean }>(
+    {
+      message: "",
+      visible: false,
+    }
+  );
 
   const productCount = products.length;
   const avgPrice =
@@ -97,7 +100,7 @@ const App: React.FC = () => {
     showToast("Payment successful! Order ready.");
   }
 
-  // What we send to Stripe backend: id + quantity only
+  // What we send to backend: id + quantity only
   const stripeCartItems = cart.map((item) => ({
     id: item.id,
     quantity: item.quantity,
@@ -249,8 +252,7 @@ const App: React.FC = () => {
                     padding: "6px 10px",
                     borderRadius: 999,
                     border: "none",
-                    background:
-                      "linear-gradient(135deg, #f97316, #eab308)",
+                    background: "linear-gradient(135deg, #f97316, #eab308)",
                     color: "#020617",
                     fontSize: 12,
                     fontWeight: 600,
@@ -350,19 +352,11 @@ const App: React.FC = () => {
                 </ul>
               </div>
 
-              {/* Stripe Checkout form */}
+              {/* Checkout form */}
               <div>
-                <div
-                  style={{
-                    marginBottom: 8,
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
-                  Checkout Details (Stripe Test Mode)
-                </div>
                 <CheckoutForm
                   cartItems={stripeCartItems}
+                  cartTotal={cartTotal}
                   onSuccess={handleCheckoutSuccess}
                 />
               </div>
@@ -385,13 +379,18 @@ const App: React.FC = () => {
         </section>
 
         <footer className="app-footer">
-          I Am The One · Front-end Storefront · React + Vite + TypeScript
+          I Am The One · Front-end Storefront · React + Vite + TypeScript ©
+          2025 Andrew Wolverton. "I Am The One" Multi-Store Commerce Engine. All
+          rights reserved.
         </footer>
       </main>
 
       {/* ORDER COMPLETE MODAL */}
       {showOrderModal && lastOrder && (
-        <div className="modal-backdrop" onClick={() => setShowOrderModal(false)}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setShowOrderModal(false)}
+        >
           <div
             className="modal-panel"
             onClick={(e) => e.stopPropagation()}
@@ -408,14 +407,16 @@ const App: React.FC = () => {
             </div>
             <h2 className="modal-title">Purchase Confirmed</h2>
             <p className="modal-subtitle">
-              This instance is wired end-to-end. Stripe charged in test mode,
-              and your frontend is production-ready.
+              This instance is wired end-to-end. The order was captured in demo
+              mode, and your frontend is production-ready.
             </p>
             <div className="modal-body">
               <div className="modal-summary">
                 <div>
                   <span className="modal-label">Items</span>
-                  <span className="modal-value">{lastOrder.items.length}</span>
+                  <span className="modal-value">
+                    {lastOrder.items.length}
+                  </span>
                 </div>
                 <div>
                   <span className="modal-label">Total</span>

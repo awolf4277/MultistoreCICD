@@ -1,20 +1,23 @@
 import os
 from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-BACKEND_ROOT = os.path.dirname(BASE_DIR)
-DOTENV_PATH = os.path.join(BACKEND_ROOT, ".env")
+load_dotenv()
+
+COPYRIGHT_NOTICE = (
+    '© 2025 Andrew Wolverton. "I Am The One" Multi-Store Commerce Engine. '
+    "All rights reserved."
+)
 
 
 def load_config(app):
-    # Load backend .env once
-    if os.path.exists(DOTENV_PATH):
-        load_dotenv(DOTENV_PATH)
-
+    """
+    Load configuration values from environment variables into the Flask app.
+    """
     app.config["STRIPE_SECRET_KEY"] = os.getenv("STRIPE_SECRET_KEY")
+    app.config["STRIPE_PUBLISHABLE_KEY"] = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    app.config["STRIPE_WEBHOOK_SECRET"] = os.getenv("STRIPE_WEBHOOK_SECRET")
     app.config["FRONTEND_URL"] = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
 
-    print("=== STRIPE ENV DEBUG ===")
-    print("DOTENV_PATH:", DOTENV_PATH)
-    print("STRIPE_SECRET_KEY present:", bool(app.config["STRIPE_SECRET_KEY"]))
-    print("=========================")
+    # Make copyright available everywhere
+    app.config["COPYRIGHT_NOTICE"] = COPYRIGHT_NOTICE
+

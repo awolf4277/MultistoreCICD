@@ -1,73 +1,41 @@
-# React + TypeScript + Vite
+# I Am The One · Multi-Store Commerce Engine
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+I Am The One is a front-end store that's ready to hook into your own backend.  
+You decide how to charge customers, how to store orders, and how to deploy — nothing is hidden.
 
-Currently, two official plugins are available:
+To start selling for real, wire your checkout endpoint to your payment processor and database.  
+Until then, this is a perfect demo and portfolio piece showing that you can ship a full UI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Front-end:** React · TypeScript · Vite
+- **Styling:** Custom CSS (app shell, hero, catalog, cart, modal, toast)
+- **State:** Local React state for cart, checkout, toast, and order summary
+- **Backend-ready:** Sends structured cart data that can be posted to your own API
+- **Stripe-ready:** Checkout UI is designed to plug into a Stripe (or other) backend endpoint
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Product catalog with local demo data (`products.ts`)
+- Add/remove items from cart with quantity tracking
+- Live cart total and item counts
+- Checkout form wired to a backend endpoint (Stripe test-mode friendly)
+- Order confirmation modal with line items and totals
+- Store mode switcher (Main / Dev / Sandbox)
+- System status strip and “FRONT-END · FULLY OPERATIONAL” hero tag
+- Toast notifications when items are added
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Running the Front-End
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+From the `frontend` folder:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+```bash
+cd frontend
+npm install
+npm run dev

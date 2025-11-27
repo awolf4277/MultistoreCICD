@@ -1,74 +1,84 @@
 # backend/app/routes/checkout.py
-from flask import Blueprint, request, jsonify, current_app
 import stripe
+from flask import Blueprint, jsonify, request, current_app
 
 checkout_bp = Blueprint("checkout", __name__)
 
+
 @checkout_bp.post("/create-payment-intent")
 def create_payment_intent():
-    try:
-        data = request.get_json(force=True)
+  """
+  Create a Stripe PaymentIntent in TEST MODE.
 
-        items = data.get("items", [])
-        customer = data.get("customer", {})
+  Expects JSON:
+  {
+    "amount": 12345,  # integer cents
+    "items": [{ "id": "...", "quantity": 1 }, ...],
+    "customer": { "name": "...", "email": "..." }
+  }
+  """
+  secret_key = current_app.config.get("STRIPE_SECRET_KEY")
+  if not secret_key:
+      return (
+          jsonify(
+              {
+                  "ok": False,
+                  "error": "Stripe secret key is not configured on the server.",
+              }
+          ),
+          500,
+      )
 
-        if not items:
-            return jsonify({"error": "Cart is empty"}), 400
+  stripe.api_key = secret_key
 
-        # Stripe secret key
-        stripe.api_key = current_app.config.get("STRIPE_SECRET_KEY")
-        if not stripe.api_key:
-            return jsonify({"error": "Stripe secret key missing"}), 500
+  data = request.get_json(silent=True) or {}
+  amount = data.get("amount")
+  items = data.get("items", [])
+  customer = data.get("customer", {})
 
-        # Calculate total amount
-        total_amount = 0
-        for item in items:
-            # All your products are fake demo products → all $89.99 or $499.99 etc
-            # So we trust frontend price for now.
-            pid = item.get("id")
-            qty = item.get("quantity", 1)
+  if not isinstance(amount, int) or amount <= 0:
+      return (
+          jsonify(
+              {
+                  "ok": False,
+                  "error": "Invalid or missing 'amount' (must be positive integer cents).",
+              }
+          ),
+          400,
+      )
 
-            if not pid:
-                return jsonify({"error": "Invalid product ID"}), 400
+  try:
+      intent = stripe.PaymentIntent.create(
+          amount=amount,
+          currency="usd",
+          automatic_payment_methods={"enabled": True},
+          receipt_email=customer.get("email"),
+          metadata={
+              "customer_name": customer.get("name", ""),
+              "order_item_count": len(items),
+              "demo_engine": "I Am The One",
+          },
+      )
+  except stripe.error.StripeError as e:
+      return (
+          jsonify(
+              {
+                  "ok": False,
+                  "error": "Stripe error",
+                  "details": str(e),
+              }
+          ),
+          500,
+      )
 
-            # For demo calibration:
-            # Example catalog:
-            # 89.99, 199.99, 499.99 etc.
-            # Here we FAKE a price map:
-            if "monitor" in pid:
-                price = 49999
-            elif "keyboard" in pid:
-                price = 12999
-            elif "headphones" in pid:
-                price = 19999
-            elif "sneaker" in pid:
-                price = 8999
-            else:
-                price = 9999  # default fallback
+  return (
+      jsonify(
+          {
+              "ok": True,
+              "message": "PaymentIntent created in Stripe TEST MODE.",
+              "clientSecret": intent.client_secret,
+          }
+      ),
+      200,
+  )
 
-            total_amount += price * qty
-
-        # Stripe payment intent (TEST MODE)
-        intent = stripe.PaymentIntent.create(
-            amount=total_amount,
-            currency="usd",
-            automatic_payment_methods={"enabled": True},
-            metadata={
-                "customer_name": customer.get("name", "Unknown"),
-                "customer_email": customer.get("email", "Unknown"),
-                "item_count": len(items),
-            },
-        )
-
-        return jsonify(
-            {
-                "clientSecret": intent.client_secret,
-                "amount": total_amount,
-                "currency": "usd",
-                "status": "created",
-            }
-        )
-
-    except Exception as e:
-        print("Checkout error:", e)
-        return jsonify({"error": str(e)}), 500
