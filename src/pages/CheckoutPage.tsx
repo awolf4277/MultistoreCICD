@@ -1,27 +1,11 @@
-// src/pages/CheckoutPage.tsx
+// src/pages/CheckoutPage.tsx (or src/CheckoutPage.tsx depending on your structure)
 import React from "react";
-import CheckoutForm from "../components/CheckoutForm";
+import App from "../App";
 
 const CheckoutPage: React.FC = () => {
-  const [submitted, setSubmitted] = React.useState(false);
-
-  return (
-    <main className="checkout-page">
-      <h1>Checkout</h1>
-
-      <CheckoutForm
-        cartItems={[]}        // empty demo cart
-        cartTotal={0}         // $0.00 total so TS is happy
-        onSuccess={() => setSubmitted(true)}
-      />
-
-      {submitted && (
-        <p style={{ marginTop: 12, fontSize: 13 }}>
-          Demo checkout complete.
-        </p>
-      )}
-    </main>
-  );
+  // Just reuse the main dashboard + checkout flow
+  return <App />;
 };
 
 export default CheckoutPage;
+
