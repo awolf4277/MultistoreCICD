@@ -3,7 +3,6 @@ import React from "react";
 import { products } from "./products";
 import CheckoutForm from "./components/CheckoutForm";
 
-// Types
 type Product = (typeof products)[number];
 
 interface CartItem extends Product {
@@ -19,11 +18,16 @@ interface LastOrder {
   store: StoreMode;
 }
 
-// Seed inventory per store (demo numbers)
+// normalize product id into a string key
+function keyFor(id: Product["id"]): string {
+  return String(id);
+}
+
+// initial inventory per store (demo values)
 const initialInventoryByStore: Record<StoreMode, Inventory> = {
-  main: Object.fromEntries(products.map((p) => [p.id, 8])) as Inventory,
-  dev: Object.fromEntries(products.map((p) => [p.id, 99])) as Inventory,
-  sandbox: Object.fromEntries(products.map((p) => [p.id, 999])) as Inventory,
+  main: Object.fromEntries(products.map((p) => [keyFor(p.id), 8])),
+  dev: Object.fromEntries(products.map((p) => [keyFor(p.id), 99])),
+  sandbox: Object.fromEntries(products.map((p) => [keyFor(p.id), 999])),
 };
 
 function cloneInventory(mode: StoreMode): Inventory {
@@ -43,11 +47,14 @@ const App: React.FC = () => {
   );
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [lastOrder, setLastOrder] = React.useState<LastOrder | null>(null);
+  const [selectedProductId, setSelectedProductId] =
+    React.useState<string | null>(null);
 
-  // Stats
+  // derived stats
   const productCount = products.length;
   const avgPrice =
-    products.reduce((sum, p) => sum + p.price, 0) / Math.max(productCount, 1);
+    products.reduce((sum, p) => sum + p.price, 0) /
+    Math.max(productCount, 1);
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cart.reduce(
@@ -60,18 +67,18 @@ const App: React.FC = () => {
     quantity: item.quantity,
   }));
 
-  // When store changes, reset inventory + cart
+  // helpers
+  function getStockFor(product: Product): number {
+    return inventory[keyFor(product.id)] ?? 0;
+  }
+
   function handleStoreChange(next: StoreMode) {
     if (next === store) return;
     setStore(next);
     setInventory(cloneInventory(next));
     setCart([]);
     setLastOrder(null);
-  }
-
-  // Inventory helpers
-  function getStockFor(product: Product): number {
-    return inventory[product.id] ?? 0;
+    setSelectedProductId(null);
   }
 
   function addToCart(product: Product) {
@@ -92,32 +99,43 @@ const App: React.FC = () => {
       return [...prev, { ...product, quantity: 1 }];
     });
 
-    setInventory((prev) => ({
-      ...prev,
-      [product.id]: stock - 1,
-    }));
+    setInventory((prev) => {
+      const k = keyFor(product.id);
+      return {
+        ...prev,
+        [k]: (prev[k] ?? 0) - 1,
+      };
+    });
+
+    // highlight this product with the strobe effect
+    setSelectedProductId(keyFor(product.id));
   }
 
-  function removeFromCart(id: string) {
+  function removeFromCart(id: Product["id"]) {
+    const k = keyFor(id);
+
     setCart((prev) => {
-      const item = prev.find((p) => p.id === id);
+      const item = prev.find((p) => keyFor(p.id) === k);
       if (!item) return prev;
 
-      // Put quantity back into inventory
+      // restore quantity back to inventory
       setInventory((invPrev) => ({
         ...invPrev,
-        [id]: (invPrev[id] ?? 0) + item.quantity,
+        [k]: (invPrev[k] ?? 0) + item.quantity,
       }));
 
-      return prev.filter((p) => p.id !== id);
+      return prev.filter((p) => keyFor(p.id) !== k);
     });
+
+    // if the removed product was selected, clear selection
+    setSelectedProductId((current) => (current === k ? null : current));
   }
 
-  // Checkout success: record order + clear cart
   function handleCheckoutSuccess() {
     if (cart.length === 0) return;
     setLastOrder({ items: cart, total: cartTotal, store });
     setCart([]);
+    setSelectedProductId(null);
   }
 
   return (
@@ -139,18 +157,21 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* HERO / SUMMARY */}
+      {/* HERO */}
       <section className="hero hero--compact">
         <div className="hero-left">
           <div className="eyebrow">I AM THE ONE</div>
           <h1 className="hero-title">
             Multi-Store Commerce Engine
-            <span className="hero-gradient"> · Catalog · Cart · Checkout</span>
+            <span className="hero-gradient">
+              {" "}
+              · Catalog · Cart · Checkout
+            </span>
           </h1>
           <p className="hero-subtitle">
-            This build of I Am The One gives you a real catalog, a working cart,
-            and a checkout form that posts orders to your own backend. No hidden
-            SDKs — you own everything.
+            This build of I Am The One gives you a real catalog, a working
+            cart, and a checkout form that posts orders to your own backend.
+            No hidden SDKs — you own everything.
           </p>
 
           <div className="hero-badges">
@@ -185,8 +206,8 @@ const App: React.FC = () => {
           <div className="metric-card">
             <div className="metric-label">Backend Hook</div>
             <div className="metric-caption">
-              Stripe-ready. Swap endpoint implementation to Stripe, PayPal, or
-              your own merchant.
+              Stripe-ready. Swap the endpoint implementation to Stripe, PayPal,
+              or your own merchant when you&apos;re ready.
             </div>
           </div>
         </div>
@@ -220,7 +241,7 @@ const App: React.FC = () => {
         </p>
       </section>
 
-      {/* MAIN LAYOUT: CATALOG + CART */}
+      {/* MAIN LAYOUT */}
       <main className="layout">
         {/* CATALOG */}
         <section className="panel panel-left">
@@ -234,18 +255,23 @@ const App: React.FC = () => {
               const stock = getStockFor(product);
               const outOfStock = stock <= 0;
               const lowStock = stock > 0 && stock <= 2;
+              const isSelected = selectedProductId === keyFor(product.id);
 
               return (
-                <article key={product.id} className="product-card">
+                <article
+                  key={keyFor(product.id)}
+                  className={`product-card ${
+                    isSelected ? "product-card--selected" : ""
+                  }`}
+                >
                   <div className="product-header">
                     <h3 className="product-title">{product.name}</h3>
-                    {product.sku && (
-                      <div className="product-sku">{product.sku}</div>
-                    )}
                   </div>
+
                   <p className="product-description">
                     Demo SKU · Local Data · No External Requests
                   </p>
+
                   <div className="product-footer">
                     <span className="product-price">
                       ${product.price.toFixed(2)}
@@ -301,7 +327,7 @@ const App: React.FC = () => {
             ) : (
               <ul className="cart-list">
                 {cart.map((item) => (
-                  <li key={item.id} className="cart-item">
+                  <li key={keyFor(item.id)} className="cart-item">
                     <div className="cart-main">
                       <div className="cart-title">{item.name}</div>
                       <div className="cart-meta">
@@ -336,14 +362,14 @@ const App: React.FC = () => {
 
           <div className="checkout-copy">
             <p>
-              I Am The One is a front-end store that's ready to hook into your
-              own backend. You decide how to charge customers, how to store
-              orders, and how to deploy — nothing is hidden.
+              I Am The One is a front-end store that&apos;s ready to hook into
+              your own backend. You decide how to charge customers, how to
+              store orders, and how to deploy — nothing is hidden.
             </p>
             <p>
               To start selling for real, wire your checkout endpoint to your
-              payment processor and database. Until then, this is a perfect
-              demo and portfolio piece showing that you can ship a full UI.
+              payment processor and database. Until then, this is a perfect demo
+              and portfolio piece showing that you can ship a full UI.
             </p>
             {lastOrder && (
               <p className="success-text">
@@ -361,8 +387,8 @@ const App: React.FC = () => {
           I Am The One · Front-end Storefront · React + Vite + TypeScript
         </span>
         <span>
-          © 2025 Andrew Wolverton. "I Am The One" Multi-Store Commerce Engine.
-          All rights reserved.
+          © 2025 Andrew Wolverton. &quot;I Am The One&quot; Multi-Store Commerce
+          Engine. All rights reserved.
         </span>
       </footer>
     </div>
